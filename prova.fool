@@ -11,5 +11,5 @@ in
   print ( 
     if g(true) 
       then { y }
-      else { 10 }
+      else { (10 - !false)/5 }
   );

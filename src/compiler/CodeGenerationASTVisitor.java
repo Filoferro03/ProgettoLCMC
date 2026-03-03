@@ -4,6 +4,7 @@ import compiler.AST.*;
 import compiler.lib.*;
 import compiler.exc.*;
 import static compiler.lib.FOOLlib.*;
+import static compiler.lib.FOOLlib.freshLabel;
 
 public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidException> {
 
@@ -123,6 +124,16 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		);	
 	}
 
+    @Override
+    public String visitNode(DivNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+                visit(n.left),
+                visit(n.right),
+                "div"
+        );
+    }
+
 	@Override
 	public String visitNode(PlusNode n) {
 		if (print) printNode(n);
@@ -132,6 +143,33 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 			"add"				
 		);
 	}
+
+    @Override
+    public String visitNode(MinusNode n) {
+        if (print) printNode(n);
+        return nlJoin(
+                visit(n.left),
+                visit(n.right),
+                "sub"
+        );
+    }
+
+    @Override
+    public String visitNode(NotNode n) {
+        if (print) printNode(n);
+        String l1 = freshLabel();
+        String l2 = freshLabel();
+        return nlJoin(
+                "push 0",
+                visit(n.exp),
+                "beq " + l1,
+                "push 0",
+                "b " + l2,
+                l1 + ":",
+                "push 1",
+                l2 + ":"
+        );
+    }
 
 	@Override
 	public String visitNode(CallNode n) {

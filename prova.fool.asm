@@ -16,6 +16,17 @@ js
 push 1
 beq label4
 push 10
+push 0
+push 0
+beq label6
+push 0
+b label7
+label6:
+push 1
+label7:
+sub
+push 5
+div
 b label5
 label4:
 lfp
