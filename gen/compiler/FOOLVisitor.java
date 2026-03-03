@@ -1,4 +1,4 @@
-// Generated from C:/Users/annam/Desktop/Progetto_LCMC/ProgettoLCMC/src/compiler/FOOL.g4 by ANTLR 4.13.2
+// Generated from C:/Users/filip/Desktop/Magistrale/LCMC/Laboratorio/Progetto/Progetto/src/compiler/FOOL.g4 by ANTLR 4.13.2
 package compiler;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -57,6 +57,48 @@ public interface FOOLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFundec(FOOLParser.FundecContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code plusMinus}
+	 * labeled alternative in {@link FOOLParser#exp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPlusMinus(FOOLParser.PlusMinusContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code or}
+	 * labeled alternative in {@link FOOLParser#exp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOr(FOOLParser.OrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code pars}
+	 * labeled alternative in {@link FOOLParser#exp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPars(FOOLParser.ParsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code false}
+	 * labeled alternative in {@link FOOLParser#exp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFalse(FOOLParser.FalseContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code integer}
+	 * labeled alternative in {@link FOOLParser#exp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInteger(FOOLParser.IntegerContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code eq}
+	 * labeled alternative in {@link FOOLParser#exp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEq(FOOLParser.EqContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code call}
 	 * labeled alternative in {@link FOOLParser#exp}.
 	 * @param ctx the parse tree
@@ -85,19 +127,12 @@ public interface FOOLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrint(FOOLParser.PrintContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code plusMinus}
+	 * Visit a parse tree produced by the {@code and}
 	 * labeled alternative in {@link FOOLParser#exp}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitPlusMinus(FOOLParser.PlusMinusContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code pars}
-	 * labeled alternative in {@link FOOLParser#exp}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPars(FOOLParser.ParsContext ctx);
+	T visitAnd(FOOLParser.AndContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code true}
 	 * labeled alternative in {@link FOOLParser#exp}.
@@ -106,33 +141,12 @@ public interface FOOLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTrue(FOOLParser.TrueContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code false}
-	 * labeled alternative in {@link FOOLParser#exp}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFalse(FOOLParser.FalseContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code integer}
-	 * labeled alternative in {@link FOOLParser#exp}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInteger(FOOLParser.IntegerContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code id}
 	 * labeled alternative in {@link FOOLParser#exp}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitId(FOOLParser.IdContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code eq}
-	 * labeled alternative in {@link FOOLParser#exp}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitEq(FOOLParser.EqContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code if}
 	 * labeled alternative in {@link FOOLParser#exp}.

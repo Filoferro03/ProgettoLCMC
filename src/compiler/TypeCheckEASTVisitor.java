@@ -136,6 +136,24 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
         return new BoolTypeNode();
     }
 
+    @Override
+    public TypeNode visitNode(AndNode n) throws TypeException {
+        if (print) printNode(n);
+        if ( !(isSubtype(visit(n.left), new BoolTypeNode())
+                && isSubtype(visit(n.right), new BoolTypeNode())) )
+            throw new TypeException("Non booleans in AND", n.getLine());
+        return new BoolTypeNode();
+    }
+
+    @Override
+    public TypeNode visitNode(OrNode n) throws TypeException {
+        if (print) printNode(n);
+        if ( !(isSubtype(visit(n.left), new BoolTypeNode())
+                && isSubtype(visit(n.right), new BoolTypeNode())) )
+            throw new TypeException("Non booleans in OR", n.getLine());
+        return new BoolTypeNode();
+    }
+
 	@Override
 	public TypeNode visitNode(CallNode n) throws TypeException {
 		if (print) printNode(n,n.id);
