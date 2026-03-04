@@ -1,0 +1,5 @@
+let
+  var a:bool = true;
+  var b:bool = false;
+in
+  print(a || b);
