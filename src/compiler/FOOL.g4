@@ -35,6 +35,8 @@ dec : VAR ID COLON type ASS exp SEMIC #vardec
 exp     : exp (TIMES | DIV) exp #timesDiv
         | exp (PLUS | MINUS) exp #plusMinus
         | exp EQ  exp   #eq
+        | exp GE exp #ge
+        | exp LE exp #le
         | NOT exp #not
         | LPAR exp RPAR #pars
         | MINUS? NUM #integer
