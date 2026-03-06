@@ -1,5 +1,14 @@
 let
-  var a:bool = true;
-  var b:bool = false;
+  /* 1. Testiamo la moltiplicazione (*) */
+  var x: int = 4 * 3;      /* x diventa 12 */
+  var y: int = 10;
+
+  /* 2. Testiamo il maggiore o uguale (>=) e minore o uguale (<=) */
+  var a: bool = x >= y;    /* 12 >= 10 -> a diventa true */
+  var b: bool = x <= 5;    /* 12 <= 5  -> b diventa false */
+
+  /* 3. Testiamo l'AND logico (&&) */
+  var c: bool = a && true; /* true && true -> c diventa true */
 in
-  print(a || b);
+  /* 4. Testiamo l'OR logico (||) che avevi già, combinando i risultati */
+  print(c || b);           /* true || false -> stamperà true (o 1) */

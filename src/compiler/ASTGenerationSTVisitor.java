@@ -95,9 +95,19 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	@Override
 	public Node visitComp(CompContext c) {
 		if (print) printVarAndProdName(c);
-		Node n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.EQ().getSymbol().getLine());		
-        return n;		
+        if (c.EQ() != null) {
+            Node n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.EQ().getSymbol().getLine());
+            return n;
+        } else if (c.GE() != null) {
+            Node n = new GreaterEqualNode(visit(c.exp(0)), visit(c.exp(1)));
+            n.setLine(c.GE().getSymbol().getLine());
+            return n;
+        }
+        Node n = new LessEqualNode(visit(c.exp(0)), visit(c.exp(1)));
+        n.setLine(c.LE().getSymbol().getLine());
+        return n;
+
 	}
 
     @Override
@@ -113,23 +123,6 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         n.setLine(c.OR().getSymbol().getLine());
         return n;
     }
-
-    /*
-	@Override
-	public Node visitLe(LeContext c){
-		if (print) printVarAndProdName(c);
-		Node n = new LessEqualNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.LE().getSymbol().getLine());
-		return n;
-	}
-
-	@Override
-	public Node visitGe(GeContext c){
-		if (print) printVarAndProdName(c);
-		Node n = new GreaterEqualNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.GE().getSymbol().getLine());
-		return n;
-	}*/
 
 	@Override
 	public Node visitVardec(VardecContext c) {
