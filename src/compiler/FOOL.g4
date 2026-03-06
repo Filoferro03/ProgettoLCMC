@@ -1,13 +1,13 @@
 grammar FOOL;
- 
+
 @lexer::members {
 public int lexicalErrors=0;
 }
-   
+
 /*------------------------------------------------------------------
  * PARSER RULES
  *------------------------------------------------------------------*/
-  
+
 prog : progbody EOF ;
 
 progbody : LET ( cldec+ dec* | dec+ ) IN exp SEMIC #letInProg
@@ -34,20 +34,20 @@ dec : VAR ID COLON type ASS exp SEMIC #vardec
 
 exp     : exp (TIMES | DIV) exp #timesDiv
         | exp (PLUS | MINUS) exp #plusMinus
-        | exp EQ  exp   #eq
-        | exp AND exp   #and
-        | exp OR exp    #or
-        | exp GE exp #ge
-        | exp LE exp #le
-        | NOT exp #not
+        | exp (EQ | GE | LE) exp #comp
+        | exp (AND | OR) exp #andOr
+	    | NOT exp #not
         | LPAR exp RPAR #pars
-        | MINUS? NUM #integer
-        | TRUE #true
-        | FALSE #false
-        | IF exp THEN CLPAR exp CRPAR ELSE CLPAR exp CRPAR  #if
-        | PRINT LPAR exp RPAR #print
+    	| MINUS? NUM #integer
+	    | TRUE #true
+	    | FALSE #false
+	    | NULL #null
+	    | NEW ID LPAR (exp (COMMA exp)* )? RPAR #new
+	    | IF exp THEN CLPAR exp CRPAR ELSE CLPAR exp CRPAR #if
+	    | PRINT LPAR exp RPAR #print
         | ID #id
-        | ID LPAR (exp (COMMA exp)* )? RPAR #call
+	    | ID LPAR (exp (COMMA exp)* )? RPAR #call
+	    | ID DOT ID LPAR (exp (COMMA exp)* )? RPAR #dotCall
         ;
 
 
@@ -105,4 +105,5 @@ WHITESP  : ( '\t' | ' ' | '\r' | '\n' )+    -> channel(HIDDEN) ;
 COMMENT : '/*' .*? '*/' -> channel(HIDDEN) ;
 
 ERR   	 : . { System.out.println("Invalid char: "+ getText() +" at line "+getLine()); lexicalErrors++; } -> channel(HIDDEN);
+
 
