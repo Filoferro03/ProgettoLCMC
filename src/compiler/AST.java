@@ -218,10 +218,10 @@ public class AST {
 	public static class ClassNode extends DecNode {
 
 		final String id;
-		final List<Node> fields;
-		final List<Node> methods;
+		final List<FieldNode> fields;
+		final List<MethodNode> methods;
 		STentry entry;
-		ClassNode(String id, List<Node> f, List<Node> m){
+		ClassNode(String id, List<FieldNode> f, List<MethodNode> m){
 			this.id = id;
 			this.fields = Collections.unmodifiableList(f);
 			this.methods = Collections.unmodifiableList(m);
@@ -247,6 +247,7 @@ public class AST {
 		final List<ParNode> parlist;
 		final List<DecNode> declist;
 		final Node exp;
+        int offset;
 		MethodNode(String i, TypeNode rt, List<ParNode> pl, List<DecNode> dl, Node e) {
 			id=i;
 			retType=rt;
@@ -332,11 +333,11 @@ public class AST {
 	public static class ClassTypeNode extends TypeNode {
 
 		final List<TypeNode> allFields;
-		final List<TypeNode> allMethods;
+		final List<ArrowTypeNode> allMethods;
 
-		ClassTypeNode(List<TypeNode> allFields, List<TypeNode> allMethods){
-			this.allFields = Collections.unmodifiableList(allFields);
-			this.allMethods = Collections.unmodifiableList(allMethods);
+		ClassTypeNode(List<TypeNode> allFields, List<ArrowTypeNode> allMethods){
+			this.allFields = allFields;
+			this.allMethods = allMethods;
 		}
 
 		@Override
