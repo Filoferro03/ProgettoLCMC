@@ -215,7 +215,7 @@ public class AST {
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
 
-	public static class ClassNode extends Node {
+	public static class ClassNode extends DecNode {
 
 		final String id;
 		final List<Node> fields;
