@@ -217,19 +217,45 @@ public class AST {
 
 	public static class ClassNode extends Node {
 
+		final String id;
+		final List<Node> fields;
+		final List<Node> methods;
+		STentry entry;
+		ClassNode(String id, List<Node> f, List<Node> m){
+			this.id = id;
+			this.fields = Collections.unmodifiableList(f);
+			this.methods = Collections.unmodifiableList(m);
+		}
+
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 
 	}
 
-	public static class FieldNode extends Node {
+	public static class FieldNode extends DecNode {
+		String id;
+		FieldNode(String id, TypeNode t){ this.id = id; type = t;}
 
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 
 	}
 
-	public static class MethodNode extends Node {
+	public static class MethodNode extends DecNode {
+		final String id;
+		final TypeNode retType;
+		final List<ParNode> parlist;
+		final List<DecNode> declist;
+		final Node exp;
+		MethodNode(String i, TypeNode rt, List<ParNode> pl, List<DecNode> dl, Node e) {
+			id=i;
+			retType=rt;
+			parlist=Collections.unmodifiableList(pl);
+			declist=Collections.unmodifiableList(dl);
+			exp=e;
+		}
+
+		//void setType(TypeNode t) {type = t;}
 
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
@@ -238,12 +264,34 @@ public class AST {
 
 	public static class ClassCallNode extends Node {
 
+		final String idObj;
+		final String idMethod;
+		final List<Node> arglist;
+		STentry entry;
+		STentry methodEntry;
+
+		ClassCallNode(String idObj, String idMethod, List<Node> arglist){
+			this.arglist = Collections.unmodifiableList(arglist);
+			this.idMethod = idMethod;
+			this.idObj = idObj;
+		}
+
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 
 	}
 
 	public static class NewNode extends Node {
+
+		final String idClass;
+		final List<Node> parlist;
+		STentry entry;
+
+		NewNode(String idClass, List<Node> parlist){
+			this.idClass = idClass;
+			this.parlist = Collections.unmodifiableList(parlist);
+		}
+
 
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
