@@ -238,4 +238,99 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		return ckvisit(entry.type); 
 	}
 
+	@Override
+	public TypeNode visitNode(MethodNode n) throws TypeException {
+		if (print) printNode(n,n.id);
+		for (Node dec : n.declist)
+			try {
+				visit(dec);
+			} catch (IncomplException e) {
+			} catch (TypeException e) {
+				System.out.println("Type checking error in a declaration: " + e.text);
+			}
+		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) )
+			throw new TypeException("Wrong return type for method " + n.id,n.getLine());
+		return null;
+	}
+
+	@Override
+	public TypeNode visitNode(ClassNode n){
+		if (print) printNode(n,n.id);
+		for(MethodNode methNode: n.methods){
+			try{
+				visit(methNode);
+			}catch (IncomplException e) {
+
+			} catch (TypeException e) {
+				System.out.println("Type checking error in method " + methNode.id + ": " + e.text);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public TypeNode visitNode(ClassCallNode n) throws TypeException {
+		if (print) printNode(n, n.idObj + "." + n.idMethod);
+
+		//  Recupero il tipo del metodo dalla methodEntry
+		TypeNode t = visit(n.methodEntry);
+
+		if ( !(t instanceof ArrowTypeNode) )
+			throw new TypeException("Member " + n.idMethod + " is not a method", n.getLine());
+
+		ArrowTypeNode at = (ArrowTypeNode) t;
+
+		// Controllo numero parametri
+		if (at.parlist.size() != n.arglist.size())
+			throw new TypeException("Wrong number of parameters in the invocation of " + n.idMethod, n.getLine());
+
+		// Controllo tipi dei parametri (isSubtype)
+		for (int i = 0; i < n.arglist.size(); i++) {
+			TypeNode argType = visit(n.arglist.get(i));
+			TypeNode parType = at.parlist.get(i);
+			if ( !isSubtype(argType, parType) )
+				throw new TypeException("Wrong type for " + (i+1) + "-th parameter in the invocation of " + n.idMethod, n.getLine());
+		}
+
+		// 4. Restituisco il tipo di ritorno del metodo
+		return at.ret;
+	}
+
+	@Override
+	public TypeNode visitNode(NewNode n) throws TypeException {
+		if (print) printNode(n, n.idClass);
+
+		// Recupero il tipo della classe dalla STentry
+		TypeNode t = visit(n.entry);
+
+		if (!(t instanceof ClassTypeNode)) {
+			throw new TypeException("Invocation of a new on a non-class: " + n.idClass, n.getLine());
+		}
+
+		ClassTypeNode ct = (ClassTypeNode) t;
+
+		// Controllo numero parametri, cioè i campi della classe
+		if (ct.allFields.size() != n.parlist.size()) {
+			throw new TypeException("Wrong number of parameters for 'new " + n.idClass + "'", n.getLine());
+		}
+
+		// Controllo tipi dei parametri
+		for (int i = 0; i < n.parlist.size(); i++) {
+			TypeNode argType = visit(n.parlist.get(i)); // Tipo del valore passato
+			TypeNode fieldType = ct.allFields.get(i);   // Tipo atteso dal campo della classe
+
+			if (!isSubtype(argType, fieldType)) {
+				throw new TypeException("Wrong type for " + (i + 1) + "-th field in 'new " + n.idClass + "'", n.getLine());
+			}
+		}
+
+		// restituisco un RefTypeNode con l'ID della classe
+		return new RefTypeNode(n.idClass);
+	}
+
+	@Override
+	public TypeNode visitNode(EmptyNode n){
+		return new EmptyTypeNode();
+	}
+
 }
