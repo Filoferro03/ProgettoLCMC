@@ -309,6 +309,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             stErrors++;
         } else {
             n.entry = entry;
+			n.nl = nestingLevel;
             if (!(entry.type instanceof RefTypeNode)) {
                 System.out.println("Id " + n.idObj + " at line " + n.getLine() + " is not an object");
                 stErrors++;
@@ -339,10 +340,16 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
                 System.err.println("Id " + n.idClass + " at line " + n.getLine() + " is not a class");
             } else {
                 n.entry = entry;
+				n.nl = nestingLevel;
             }
         }
 
         return null;
     }
 
+	@Override
+	public Void visitNode(EmptyNode n) {
+		if (print) printNode(n);
+		return null;
+	}
 }

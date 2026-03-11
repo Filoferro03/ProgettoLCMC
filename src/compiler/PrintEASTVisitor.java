@@ -200,4 +200,69 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		return null;
 	}
 
+	@Override
+	public Void visitNode(ClassNode n) {
+		printNode(n, n.id);
+		for (FieldNode field : n.fields) visit(field);
+		for (MethodNode meth : n.methods) visit(meth);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(FieldNode n) {
+		printNode(n, n.id);
+		visit(n.getType());
+		return null;
+	}
+
+	@Override
+	public Void visitNode(MethodNode n) {
+		printNode(n, n.id);
+		visit(n.retType);
+		for (ParNode par : n.parlist) visit(par);
+		for (Node dec : n.declist) visit(dec);
+		visit(n.exp);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(ClassCallNode n) {
+		printNode(n, n.idObj + "." + n.idMethod);
+		for (Node arg : n.arglist) visit(arg);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(NewNode n) {
+		printNode(n, n.idClass);
+		for (Node arg : n.parlist) visit(arg);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(EmptyNode n) {
+		printNode(n, "null");
+		return null;
+	}
+
+	@Override
+	public Void visitNode(ClassTypeNode n) {
+		printNode(n);
+		for (TypeNode f : n.allFields) visit(f);
+		for (TypeNode m : n.allMethods) visit(m);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(RefTypeNode n) {
+		printNode(n, n.id);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(EmptyTypeNode n) {
+		printNode(n);
+		return null;
+	}
+
 }

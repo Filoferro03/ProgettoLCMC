@@ -270,6 +270,7 @@ public class AST {
 		final List<Node> arglist;
 		STentry entry;
 		STentry methodEntry;
+		int nl;
 
 		ClassCallNode(String idObj, String idMethod, List<Node> arglist){
 			this.arglist = Collections.unmodifiableList(arglist);
@@ -287,6 +288,7 @@ public class AST {
 		final String idClass;
 		final List<Node> parlist;
 		STentry entry;
+		int nl;
 
 		NewNode(String idClass, List<Node> parlist){
 			this.idClass = idClass;

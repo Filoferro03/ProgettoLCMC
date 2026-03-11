@@ -291,4 +291,106 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		if (print) printNode(n,n.val.toString());
 		return "push "+n.val;
 	}
+
+	@Override
+	public String visitNode(ClassNode n) {
+		if (print) printNode(n, n.id);
+		String dispatchTableCode = "lhp";
+		for (MethodNode meth : n.methods) {
+			dispatchTableCode = nlJoin(dispatchTableCode,
+					visit(meth),
+					"lhp",
+					"sw",
+					"lhp", "push 1", "add", "shp"
+			);
+		}
+		return dispatchTableCode;
+	}
+
+	@Override
+	public String visitNode(NewNode n) {
+		if (print) printNode(n, n.idClass);
+
+		String argCode = null;
+		for (int i = 0; i < n.parlist.size(); i++) {
+			argCode = nlJoin(argCode, visit(n.parlist.get(i)));
+		}
+
+		String allocCode = null;
+		for (int i = 0; i < n.parlist.size(); i++) {
+			allocCode = nlJoin(allocCode,
+					"lhp",
+					"sw",
+					"lhp", "push 1", "add", "shp"
+			);
+		}
+
+		String getAR = null;
+		for (int i = 0; i < n.nl - n.entry.nl; i++) getAR = nlJoin(getAR, "lw");
+
+		return nlJoin(
+				argCode,
+				allocCode,
+				"lfp", getAR,
+				"push" + n.entry.offset, "add",
+				"lw",
+				"lhp", "sw",
+				"lhp",
+				"lhp", "push 1", "add", "shp"
+		);
+	}
+
+	@Override
+	public String visitNode(MethodNode n) {
+		if (print) printNode(n, n.id);
+		String declCode = null, popDecl = null, popParl = null;
+		for (Node dec : n.declist) {
+			declCode = nlJoin(declCode, visit(dec));
+			popDecl = nlJoin(popDecl, "pop");
+		}
+		for (int i = 0; i < n.parlist.size(); i++) popParl = nlJoin(popParl, "pop");
+
+		String funl = freshFunLabel();
+		putCode(
+				nlJoin(
+						funl + ":",
+						"cfp",
+						"lra",
+						declCode,
+						visit(n.exp),
+						"stm",
+						popDecl,
+						"sra",
+						"pop",
+						popParl,
+						"sfp",
+						"ltm",
+						"lra",
+						"js"
+				)
+		);
+		return "push " + funl;
+	}
+
+	@Override
+	public String visitNode(ClassCallNode n) {
+		if (print) printNode(n, n.idObj + "." + n.idMethod);
+
+		String argCode = null, getAR = null;
+		for (int i = n.arglist.size() - 1; i >= 0; i--) argCode = nlJoin(argCode, visit(n.arglist.get(i)));
+		for (int i = 0; i < n.nl - n.entry.nl; i++) getAR = nlJoin(getAR, "lw");
+
+		return nlJoin(
+				"lfp",
+				argCode,
+				"lfp", getAR,
+				"push " + n.entry.offset, "add",
+				"lw",
+				"stm", "ltm", "ltm",
+				"lw",
+				"push " + n.methodEntry.offset, "add",
+				"lw",
+				"js"
+		);
+	}
 }
