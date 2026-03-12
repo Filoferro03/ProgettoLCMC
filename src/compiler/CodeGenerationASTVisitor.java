@@ -249,22 +249,46 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
 	@Override
 	public String visitNode(CallNode n) {
-		if (print) printNode(n,n.id);
+		if (print) printNode(n, n.id);
 		String argCode = null, getAR = null;
-		for (int i=n.arglist.size()-1;i>=0;i--) argCode=nlJoin(argCode,visit(n.arglist.get(i)));
-		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
-		return nlJoin(
-			"lfp", // load Control Link (pointer to frame of function "id" caller)
-			argCode, // generate code for argument expressions in reversed order
-			"lfp", getAR, // retrieve address of frame containing "id" declaration
-                          // by following the static chain (of Access Links)
-            "stm", // set $tm to popped value (with the aim of duplicating top of stack)
-            "ltm", // load Access Link (pointer to frame of function "id" declaration)
-            "ltm", // duplicate top of stack
-            "push "+n.entry.offset, "add", // compute address of "id" declaration
-			"lw", // load address of "id" function
-            "js"  // jump to popped address (saving address of subsequent instruction in $ra)
+
+		// 1. Generazione codice per gli argomenti (in ordine inverso)
+		for (int i = n.arglist.size() - 1; i >= 0; i--)
+			argCode = nlJoin(argCode, visit(n.arglist.get(i)));
+
+		// 2. Risalita della catena statica
+		for (int i = 0; i < n.nl - n.entry.nl; i++)
+			getAR = nlJoin(getAR, "lw");
+
+		// Codice comune iniziale: risalita catena e duplicazione indirizzo (Object Pointer o AR)
+		String commonCode = nlJoin(
+				"lfp",
+				argCode,
+				"lfp", getAR,
+				"stm", "ltm", "ltm"
 		);
+
+		// 3. Distinzione tra Funzione e Metodo
+		if (n.entry.offset >= 0) {
+			// CASO METODO (chiamata interna alla classe)
+			return nlJoin(
+					commonCode,
+					"lw",                   // Carica il Dispatch Pointer (che è a offset 0 dell'oggetto)
+					"push " + n.entry.offset,
+					"add",                  // Calcola indirizzo del metodo nella Dispatch Table
+					"lw",                   // Carica l'indirizzo del codice del metodo
+					"js"                    // Salto
+			);
+		} else {
+			// CASO FUNZIONE (invariato)
+			return nlJoin(
+					commonCode,
+					"push " + n.entry.offset,
+					"add",
+					"lw",
+					"js"
+			);
+		}
 	}
 
 	@Override
@@ -393,4 +417,12 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				"js"
 		);
 	}
+
+	@Override
+	public String visitNode(EmptyNode n) {
+		if (print) printNode(n);
+		return nlJoin("push -1");
+	}
+
+
 }
