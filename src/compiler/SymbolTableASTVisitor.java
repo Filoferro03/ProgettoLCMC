@@ -344,6 +344,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             }
         }
 
+		for (Node arg : n.parlist) {
+			visit(arg);
+		}
+
         return null;
     }
 
