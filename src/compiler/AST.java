@@ -218,11 +218,13 @@ public class AST {
 	public static class ClassNode extends DecNode {
 
 		final String id;
+		final String superId;
 		final List<FieldNode> fields;
 		final List<MethodNode> methods;
 		STentry entry;
-		ClassNode(String id, List<FieldNode> f, List<MethodNode> m){
+		ClassNode(String id, String superId, List<FieldNode> f, List<MethodNode> m){
 			this.id = id;
+			this.superId = superId;
 			this.fields = Collections.unmodifiableList(f);
 			this.methods = Collections.unmodifiableList(m);
 		}

@@ -231,9 +231,11 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitCldec(CldecContext c) {
 		if (print) printVarAndProdName(c);
 		String classId = c.ID(0).getText();
+		String superId = null;
 		List<FieldNode> fields = new ArrayList<>();
 		int i = 1;
 		if (c.EXTENDS() != null) {
+			superId = c.ID(1).getText();
 			i++;
 		}
 		for (TypeContext tc : c.type()) {
@@ -246,7 +248,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		for (MethdecContext mc : c.methdec()) {
 			methods.add((MethodNode) visit(mc));
 		}
-		Node n = new ClassNode(classId, fields, methods);
+		Node n = new ClassNode(classId, superId, fields, methods);
 		n.setLine(c.CLASS().getSymbol().getLine());
 		return n;
 	}
