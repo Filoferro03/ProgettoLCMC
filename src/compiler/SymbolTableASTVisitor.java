@@ -262,15 +262,22 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		}
 		for (FieldNode field : n.fields) {
 			if (virtualTable.containsKey(field.id)) {
-				System.out.println("Field id " + field.id + " at line " + n.getLine() + " already declared in superclass");
-				stErrors++;
+				STentry oldField = virtualTable.get(field.id);
+				STentry fieldEntry = new STentry(nestingLevel, field.getType(), oldField.offset);
+				virtualTable.put(field.id, fieldEntry);
+				fieldTypes.set(-fieldEntry.offset - 1, field.getType());
 			} else {
 				STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
 				virtualTable.put(field.id, fieldEntry);
 				fieldTypes.add(-fieldEntry.offset - 1, field.getType());
 			}
 		}
+		Set<String> localMethods = new HashSet<>();
 		for (MethodNode meth : n.methods){
+			if (!localMethods.add(meth.id)) {
+				System.out.println("Method id " + meth.id + " at line "+ meth.getLine() +" already declared");
+				stErrors++;
+			}
 			visit(meth);
 			List<TypeNode> parType = new ArrayList<>();
 			for ( ParNode par : meth.parlist ){
@@ -302,10 +309,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 //        n.type = new ArrowTypeNode(parTypes,n.retType); //settaggio del tipo del metodo
         STentry entry = new STentry(nestingLevel, new ArrowTypeNode(parTypes,n.retType), n.offset);
         //inserimento di ID nella symtable
-        if (virtualTable.put(n.id, entry) != null) {
-            System.out.println("Method id " + n.id + " at line "+ n.getLine() +" already declared");
-            stErrors++;
-        }
+		virtualTable.put(n.id, entry);
         //creata una nuova hashmap per lo scope interno al metodo
         nestingLevel++;
         Map<String, STentry> hmn = new HashMap<>();
