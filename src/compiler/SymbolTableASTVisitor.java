@@ -245,22 +245,44 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         symTable.add(virtualTable);
         methodOffset = 0; //rise
         int fieldOffset = -1; //decrease
-        for (FieldNode field : n.fields) {
-            STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
-            if (virtualTable.put(field.id, fieldEntry) != null) {
-                System.out.println("Field id " + field.id + " at line " + n.getLine() + " already declared");
-                stErrors++;
-            }
-            fieldTypes.add(-fieldEntry.offset - 1, field.getType());
-        }
-        for (MethodNode meth : n.methods){
-            visit(meth);
-            List<TypeNode> parType = new ArrayList<>();
-            for ( ParNode par : meth.parlist ){
-                parType.add(par.getType());
-            }
-            methodTypes.add(meth.offset, new ArrowTypeNode(parType, meth.retType));
-        }
+		if (n.superId != null) {
+			STentry superEntry = symTable.get(0).get(n.superId);
+			if (superEntry == null || !(superEntry.type instanceof ClassTypeNode)) {
+				System.out.println("Superclass " + n.superId + " at line " + n.getLine() + " not declared or not a class");
+				stErrors++;
+			} else {
+				ClassTypeNode superType = (ClassTypeNode) superEntry.type;
+				fieldTypes.addAll(superType.allFields);
+				methodTypes.addAll(superType.allMethods);
+				Map<String, STentry> superVT = classTable.get(n.superId);
+				virtualTable.putAll(superVT);
+				fieldOffset = -fieldTypes.size() - 1;
+				methodOffset = methodTypes.size();
+			}
+		}
+		for (FieldNode field : n.fields) {
+			if (virtualTable.containsKey(field.id)) {
+				System.out.println("Field id " + field.id + " at line " + n.getLine() + " already declared in superclass");
+				stErrors++;
+			} else {
+				STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
+				virtualTable.put(field.id, fieldEntry);
+				fieldTypes.add(-fieldEntry.offset - 1, field.getType());
+			}
+		}
+		for (MethodNode meth : n.methods){
+			visit(meth);
+			List<TypeNode> parType = new ArrayList<>();
+			for ( ParNode par : meth.parlist ){
+				parType.add(par.getType());
+			}
+			ArrowTypeNode methType = new ArrowTypeNode(parType, meth.retType);
+			if (meth.offset < methodTypes.size()) {
+				methodTypes.set(meth.offset, methType);
+			} else {
+				methodTypes.add(meth.offset, methType);
+			}
+		}
         symTable.remove(nestingLevel--);
         return null;
     }
@@ -271,7 +293,12 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         Map<String, STentry> virtualTable = symTable.get(nestingLevel);
         List<TypeNode> parTypes = new ArrayList<>();
         for (ParNode par : n.parlist) parTypes.add(par.getType());
-        n.offset = methodOffset++;
+		if (virtualTable.containsKey(n.id)) {
+			STentry oldMethod = virtualTable.get(n.id);
+			n.offset = oldMethod.offset;
+		} else {
+			n.offset = methodOffset++;
+		}
 //        n.type = new ArrowTypeNode(parTypes,n.retType); //settaggio del tipo del metodo
         STentry entry = new STentry(nestingLevel, new ArrowTypeNode(parTypes,n.retType), n.offset);
         //inserimento di ID nella symtable
