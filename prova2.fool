@@ -1,0 +1,19 @@
+let
+
+  class A (a:int) {
+    fun method1:int (x1:bool, x2:bool) a;
+  }
+
+  class B extends A (a:bool) {
+    fun method1:bool (x1:int, x2:int) a;
+  }
+
+  class C extends B (b:int) {
+    fun method2:int () b;
+  }
+
+  var o1:A = new A(10);
+  var o2:A = new B(false);
+  var o3:A = new C(true, 10);
+
+in print(o2.method1(true, false));

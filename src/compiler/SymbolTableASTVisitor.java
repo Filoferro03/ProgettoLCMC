@@ -247,6 +247,8 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         int fieldOffset = -1; //decrease
 		if (n.superId != null) {
 			STentry superEntry = symTable.get(0).get(n.superId);
+            // viene attaccata alla dichiarazione della classe la entry della classe che estende in modo da usarla nel type checking
+            n.superEntry = superEntry;
 			if (superEntry == null || !(superEntry.type instanceof ClassTypeNode)) {
 				System.out.println("Superclass " + n.superId + " at line " + n.getLine() + " not declared or not a class");
 				stErrors++;
@@ -290,6 +292,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 				methodTypes.add(meth.offset, methType);
 			}
 		}
+        n.type = classType;
         symTable.remove(nestingLevel--);
         return null;
     }

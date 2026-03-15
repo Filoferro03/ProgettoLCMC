@@ -221,7 +221,8 @@ public class AST {
 		final String superId;
 		final List<FieldNode> fields;
 		final List<MethodNode> methods;
-		STentry entry;
+        ClassTypeNode type;
+        STentry superEntry;
 		ClassNode(String id, String superId, List<FieldNode> f, List<MethodNode> m){
 			this.id = id;
 			this.superId = superId;

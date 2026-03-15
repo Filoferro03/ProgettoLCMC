@@ -191,7 +191,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(IdNode n) throws TypeException {
 		if (print) printNode(n,n.id);
 		TypeNode t = visit(n.entry); 
-		if (t instanceof ArrowTypeNode)
+		if (t instanceof ArrowTypeNode || t instanceof RefTypeNode)
 			throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
 		return t;
 	}
@@ -274,6 +274,31 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(ClassNode n){
 		if (print) printNode(n,n.id);
+        // aggiornamento della catena di extends se la classe ne estende un'altra
+        if(n.superId != null) {
+            superType.put(n.id, n.superId);
+            // confronto del tipo dei campi e dei metodi con la classe genitore
+            //if(n.entry == null)
+            //    System.out.println(n.id);
+            ClassTypeNode subClassType = n.type;
+            ClassTypeNode superClassType = (ClassTypeNode) n.superEntry.type;
+            int index = 0;
+            // verifica che i campi sovrascritti nella sottoclasse siano sottotipi dei campi della superclasse
+            for (TypeNode parentField : superClassType.allFields){
+                if(!isSubtype(subClassType.allFields.get(index), parentField)){
+                    System.out.println("Type checking error in field inheritance " + subClassType.allFields.get(index) + "of class " + n.id + ": " + n.getLine());
+                }
+                index++;
+            }
+            index = 0;
+            // verifica che l'eventuale overriding di metodi sia corretto (co-varianza per il tipo ritorno e contro-varianza per il tipo dei parametri)
+            for (TypeNode parentMethod : superClassType.allMethods){
+                if(!isSubtype(subClassType.allMethods.get(index), parentMethod)){
+                    System.out.println("Type checking error in method inheritance " + subClassType.allMethods.get(index) + "of class " + n.id + ": " + n.getLine());
+                }
+                index++;
+            }
+        }
 		for(MethodNode methNode: n.methods){
 			try{
 				visit(methNode);
