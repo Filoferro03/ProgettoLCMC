@@ -229,6 +229,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
     @Override
     public Void visitNode(ClassNode n){
         if(print) printNode(n);
+		HashSet<String> localNames = new HashSet<>();
         Map<String, STentry> hm = symTable.get(nestingLevel);
         List<TypeNode> fieldTypes = new ArrayList<>();
         List<ArrowTypeNode> methodTypes = new ArrayList<>();
@@ -263,34 +264,47 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			}
 		}
 		for (FieldNode field : n.fields) {
-			if (virtualTable.containsKey(field.id)) {
-				STentry oldField = virtualTable.get(field.id);
-				STentry fieldEntry = new STentry(nestingLevel, field.getType(), oldField.offset);
-				virtualTable.put(field.id, fieldEntry);
-				fieldTypes.set(-fieldEntry.offset - 1, field.getType());
-			} else {
-				STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
-				virtualTable.put(field.id, fieldEntry);
-				fieldTypes.add(-fieldEntry.offset - 1, field.getType());
+			if (!localNames.add(field.id)) {
+				System.out.println("Field or method id " + field.id + " at line " + n.getLine() + " already declared in this class");
+				stErrors++;
+			}else{
+				localNames.add(field.id);
+				if (virtualTable.containsKey(field.id)) {
+					STentry oldField = virtualTable.get(field.id);
+					STentry fieldEntry = new STentry(nestingLevel, field.getType(), oldField.offset);
+					virtualTable.put(field.id, fieldEntry);
+					fieldTypes.set(-fieldEntry.offset - 1, field.getType());
+				} else {
+					STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
+					virtualTable.put(field.id, fieldEntry);
+					fieldTypes.add(-fieldEntry.offset - 1, field.getType());
+				}
 			}
+
 		}
 		Set<String> localMethods = new HashSet<>();
 		for (MethodNode meth : n.methods){
-			if (!localMethods.add(meth.id)) {
-				System.out.println("Method id " + meth.id + " at line "+ meth.getLine() +" already declared");
+			if (!localNames.add(meth.id)) {
+				System.out.println("Field or method id " + meth.id + " at line " + meth.getLine() + " already declared in this class");
 				stErrors++;
+			}else{
+				if (!localMethods.add(meth.id)) {
+					System.out.println("Method id " + meth.id + " at line "+ meth.getLine() +" already declared");
+					stErrors++;
+				}
+				visit(meth);
+				List<TypeNode> parType = new ArrayList<>();
+				for ( ParNode par : meth.parlist ){
+					parType.add(par.getType());
+				}
+				ArrowTypeNode methType = new ArrowTypeNode(parType, meth.retType);
+				if (meth.offset < methodTypes.size()) {
+					methodTypes.set(meth.offset, methType);
+				} else {
+					methodTypes.add(meth.offset, methType);
+				}
 			}
-			visit(meth);
-			List<TypeNode> parType = new ArrayList<>();
-			for ( ParNode par : meth.parlist ){
-				parType.add(par.getType());
-			}
-			ArrowTypeNode methType = new ArrowTypeNode(parType, meth.retType);
-			if (meth.offset < methodTypes.size()) {
-				methodTypes.set(meth.offset, methType);
-			} else {
-				methodTypes.add(meth.offset, methType);
-			}
+
 		}
         n.type = classType;
         symTable.remove(nestingLevel--);
