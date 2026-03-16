@@ -274,10 +274,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 					STentry fieldEntry = new STentry(nestingLevel, field.getType(), oldField.offset);
 					virtualTable.put(field.id, fieldEntry);
 					fieldTypes.set(-fieldEntry.offset - 1, field.getType());
+					field.offset = fieldEntry.offset;
+
 				} else {
 					STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
 					virtualTable.put(field.id, fieldEntry);
 					fieldTypes.add(-fieldEntry.offset - 1, field.getType());
+					field.offset = fieldEntry.offset;
 				}
 			}
 
@@ -323,7 +326,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		} else {
 			n.offset = methodOffset++;
 		}
-//        n.type = new ArrowTypeNode(parTypes,n.retType); //settaggio del tipo del metodo
+        n.setType(new ArrowTypeNode(parTypes,n.retType));
         STentry entry = new STentry(nestingLevel, new ArrowTypeNode(parTypes,n.retType), n.offset);
         //inserimento di ID nella symtable
 		virtualTable.put(n.id, entry);

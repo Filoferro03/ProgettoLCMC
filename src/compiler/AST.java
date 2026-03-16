@@ -237,6 +237,7 @@ public class AST {
 
 	public static class FieldNode extends DecNode {
 		String id;
+		int offset;
 		FieldNode(String id, TypeNode t){ this.id = id; type = t;}
 
 		@Override
@@ -260,7 +261,7 @@ public class AST {
 			exp=e;
 		}
 
-		//void setType(TypeNode t) {type = t;}
+		void setType(TypeNode t) {type = t;}
 
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}

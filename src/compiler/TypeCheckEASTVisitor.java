@@ -259,6 +259,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(MethodNode n) throws TypeException {
 		if (print) printNode(n,n.id);
+
 		for (Node dec : n.declist)
 			try {
 				visit(dec);
@@ -272,42 +273,61 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	}
 
 	@Override
-	public TypeNode visitNode(ClassNode n){
-		if (print) printNode(n,n.id);
-        // aggiornamento della catena di extends se la classe ne estende un'altra
-        if(n.superId != null) {
-            superType.put(n.id, n.superId);
-            // confronto del tipo dei campi e dei metodi con la classe genitore
-            //if(n.entry == null)
-            //    System.out.println(n.id);
-            ClassTypeNode subClassType = n.type;
-            ClassTypeNode superClassType = (ClassTypeNode) n.superEntry.type;
-            int index = 0;
-            // verifica che i campi sovrascritti nella sottoclasse siano sottotipi dei campi della superclasse
-            for (TypeNode parentField : superClassType.allFields){
-                if(!isSubtype(subClassType.allFields.get(index), parentField)){
-                    System.out.println("Type checking error in field inheritance " + subClassType.allFields.get(index) + "of class " + n.id + ": " + n.getLine());
-                }
-                index++;
-            }
-            index = 0;
-            // verifica che l'eventuale overriding di metodi sia corretto (co-varianza per il tipo ritorno e contro-varianza per il tipo dei parametri)
-            for (TypeNode parentMethod : superClassType.allMethods){
-                if(!isSubtype(subClassType.allMethods.get(index), parentMethod)){
-                    System.out.println("Type checking error in method inheritance " + subClassType.allMethods.get(index) + "of class " + n.id + ": " + n.getLine());
-                }
-                index++;
-            }
-        }
-		for(MethodNode methNode: n.methods){
-			try{
+	public TypeNode visitNode(ClassNode n) {
+		if (print) printNode(n, n.id);
+
+		for (MethodNode methNode : n.methods) {
+			try {
 				visit(methNode);
-			}catch (IncomplException e) {
+			} catch (IncomplException e) {
 
 			} catch (TypeException e) {
 				System.out.println("Type checking error in method " + methNode.id + ": " + e.text);
 			}
 		}
+
+		// In caso di ereditarietà, esegui i controlli di overriding [cite: 409]
+		if (n.superId != null) {
+			// Aggiorna la mappa della gerarchia per isSubtype [cite: 274, 277]
+			superType.put(n.id, n.superId);
+
+			// Recupera il tipo del genitore tramite la superEntry [cite: 411]
+			ClassTypeNode parentCT = (ClassTypeNode) n.superEntry.type;
+
+
+			for (FieldNode field : n.fields) {
+				// Calcola la posizione nel genitore: -offset-1
+				int position = -field.offset - 1;
+
+				// Se la posizione è inferiore alla lunghezza, è overriding
+				if (position < parentCT.allFields.size()) {
+					TypeNode parentFieldType = parentCT.allFields.get(position);
+					if (!isSubtype(field.getType(), parentFieldType)) {
+						System.out.println("Type checking error: invalid field overriding for " + field.id +
+								" in class " + n.id + " at line " + n.getLine());
+					}
+				}
+			}
+
+			for (MethodNode meth : n.methods) {
+				// Calcola la posizione nel genitore: offset
+				int position = meth.offset;
+
+
+				// Se la posizione è inferiore alla lunghezza, è overriding
+				if (position < parentCT.allMethods.size()) {
+					// Recuperiamo il tipo funzionale (ArrowTypeNode) del metodo genitore
+					TypeNode parentMethodType = parentCT.allMethods.get(position);
+
+					if (!isSubtype(meth.getType(), parentMethodType)) {
+						System.out.println("Type checking error: invalid method overriding for " + meth.id +
+								" in class " + n.id + " at line " + meth.getLine());
+					}
+				}
+			}
+		}
+
+
 		return null;
 	}
 

@@ -13,6 +13,10 @@ public class TypeRels {
 
 	// valuta se il tipo "a" e' <= al tipo "b", dove "a" e "b" sono tipi di base: IntTypeNode o BoolTypeNode
 	public static boolean isSubtype(TypeNode a, TypeNode b) {
+
+        // Protezione contro i null
+        if (a == null || b == null) return false;
+
 		// Se sono la stessa classe Java
 		if (a.getClass().equals(b.getClass())) {
 			// Se sono RefTypeNode, mi assicuro che abbiano lo stesso ID classe o che a sia sottoclasse di b
