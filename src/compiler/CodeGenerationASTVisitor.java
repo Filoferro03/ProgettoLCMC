@@ -3,6 +3,11 @@ package compiler;
 import compiler.AST.*;
 import compiler.lib.*;
 import compiler.exc.*;
+import svm.ExecuteVM;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static compiler.lib.FOOLlib.*;
 import static compiler.lib.FOOLlib.freshLabel;
 
@@ -10,6 +15,8 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
   CodeGenerationASTVisitor() {}
   CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
+
+	private List<List<String>> dispatchTables = new ArrayList<>();
 
 	@Override
 	public String visitNode(ProgLetInNode n) {
@@ -319,15 +326,38 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	@Override
 	public String visitNode(ClassNode n) {
 		if (print) printNode(n, n.id);
-		String dispatchTableCode = "lhp";
+
+		// 1. Costruzione LOGICA della tabella (ArrayList)
+		List<String> dispatchTable = new ArrayList<>();
+		if (n.superId != null) {
+			// Copia dalla superclasse usando l'offset [cite: 340, 342]
+			List<String> superTable = this.dispatchTables.get(-n.superEntry.offset - 2);
+			dispatchTable.addAll(new ArrayList<>(superTable));
+		}
+
+		// 2. Visita i metodi locali per aggiornare le label e gestire l'overriding [cite: 343, 347]
 		for (MethodNode meth : n.methods) {
+			visit(meth); // Genera la label e mette il codice in FOOLlib [cite: 344, 345]
+			if (meth.offset < dispatchTable.size()) {
+				dispatchTable.set(meth.offset, meth.label); // Override [cite: 347]
+			} else {
+				dispatchTable.add(meth.label); // Nuovo metodo [cite: 250, 340]
+			}
+		}
+
+		// 3. Salvataggio nel visitor per le sottoclassi future [cite: 329, 330]
+		this.dispatchTables.add(dispatchTable);
+
+		// 4. Generazione CODICE FISICO per allocazione in HEAP
+		String dispatchTableCode = "lhp"; // Il Dispatch Pointer da ritornare [cite: 349]
+		for (String label : dispatchTable) {
 			dispatchTableCode = nlJoin(dispatchTableCode,
-					visit(meth),
-					"lhp",
-					"sw",
-					"lhp", "push 1", "add", "shp"
+					"push " + label, // Carica l'indirizzo del metodo
+					"lhp", "sw",      // Scrivi nello heap
+					"lhp", "push 1", "add", "shp" // Incrementa $hp
 			);
 		}
+
 		return dispatchTableCode;
 	}
 
@@ -353,14 +383,18 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		for (int i = 0; i < n.nl - n.entry.nl; i++) getAR = nlJoin(getAR, "lw");
 
 		return nlJoin(
-				argCode,
-				allocCode,
-				"lfp", getAR,
-				"push" + n.entry.offset, "add",
-				"lw",
-				"lhp", "sw",
-				"lhp",
-				"lhp", "push 1", "add", "shp"
+				argCode,    // Valori dei campi sullo stack
+				allocCode,  // Sposta i campi nello heap, $hp ora punta alla cella dopo l'ultimo campo
+
+				// Recupero Dispatch Pointer dall'AR globale (MEMSIZE + offset)
+				"push " + ExecuteVM.MEMSIZE,
+				"push " + n.entry.offset, "add",
+				"lw",       // Carica il dispatch pointer della classe
+
+				"lhp", "sw", // Lo scrive nello heap nella posizione corrente di $hp
+
+				"lhp",       // Questo è l'OBJECT POINTER da ritornare (punta al dispatch pointer)
+				"lhp", "push 1", "add", "shp" // Incrementa $hp finale
 		);
 	}
 
@@ -393,7 +427,8 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 						"js"
 				)
 		);
-		return "push " + funl;
+		n.label = funl;
+		return null;
 	}
 
 	@Override
@@ -401,20 +436,29 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		if (print) printNode(n, n.idObj + "." + n.idMethod);
 
 		String argCode = null, getAR = null;
-		for (int i = n.arglist.size() - 1; i >= 0; i--) argCode = nlJoin(argCode, visit(n.arglist.get(i)));
-		for (int i = 0; i < n.nl - n.entry.nl; i++) getAR = nlJoin(getAR, "lw");
+		// 1. Caricamento argomenti [cite: 140, 367, 368]
+		for (int i = n.arglist.size() - 1; i >= 0; i--)
+			argCode = nlJoin(argCode, visit(n.arglist.get(i)));
+
+		// 2. Risalita catena statica per trovare l'oggetto [cite: 360, 368]
+		for (int i = 0; i < n.nl - n.entry.nl; i++)
+			getAR = nlJoin(getAR, "lw");
 
 		return nlJoin(
 				"lfp",
-				argCode,
-				"lfp", getAR,
+				argCode,          // Parametri del metodo [cite: 367]
+				"lfp", getAR,     // Risalita fino all'AR dell'ID1 [cite: 368]
 				"push " + n.entry.offset, "add",
-				"lw",
-				"stm", "ltm", "ltm",
-				"lw",
+				"lw",             // Carica l'Object Pointer (ID1) sullo stack [cite: 368]
+
+				// --- INIZIO DUPLICAZIONE ---
+				"stm", "ltm", "ltm", // Se la tua SVM non ha 'copy', questo duplica il valore
+				// --- FINE DUPLICAZIONE ---
+
+				"lw",             // Il primo ltm viene usato per caricare il Dispatch Pointer
 				"push " + n.methodEntry.offset, "add",
-				"lw",
-				"js"
+				"lw",             // Carica l'indirizzo del metodo dalla Dispatch Table
+				"js"              // Salta al metodo. Il secondo ltm è rimasto sotto ed è l'AL
 		);
 	}
 
