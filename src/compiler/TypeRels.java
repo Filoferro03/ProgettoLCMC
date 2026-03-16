@@ -62,4 +62,47 @@ public class TypeRels {
 				((a instanceof EmptyTypeNode) && (b instanceof RefTypeNode));
 	}
 
+    public static TypeNode lowestCommonAncestor(TypeNode a, TypeNode b) {
+        // Caso tipi riferimento o null (EmptyTypeNode) [cite: 421]
+        if ((a instanceof RefTypeNode || a instanceof EmptyTypeNode) &&
+                (b instanceof RefTypeNode || b instanceof EmptyTypeNode)) {
+
+            // Se uno tra "a" e "b" è EmptyTypeNode torna l'altro [cite: 422]
+            if (a instanceof EmptyTypeNode) return b;
+            if (b instanceof EmptyTypeNode) return a;
+
+            // Entrambi sono RefTypeNode: risalita della gerarchia
+            RefTypeNode refA = (RefTypeNode) a;
+            RefTypeNode refB = (RefTypeNode) b;
+
+            // All'inizio considera la classe di "a"
+            String currentA = refA.id;
+
+            while (currentA != null) {
+                // Controlla se "b" è sottotipo della classe considerata
+                if (isSubtype(refB, new RefTypeNode(currentA))) {
+                    // Torna un RefTypeNode a tale classe qualora il controllo abbia successo [cite: 424]
+                    return new RefTypeNode(currentA);
+                }
+                // Risale le superclassi tramite la funzione "superType"
+                currentA = superType.get(currentA);
+            }
+            return null;
+        }
+
+        // Caso per a e b tipi bool/int
+        if ((a instanceof IntTypeNode || a instanceof BoolTypeNode) &&
+                (b instanceof IntTypeNode || b instanceof BoolTypeNode)) {
+
+            // Torna int se almeno uno è int, bool altrimenti
+            if (a instanceof IntTypeNode || b instanceof IntTypeNode) {
+                return new IntTypeNode();
+            }
+            return new BoolTypeNode();
+        }
+
+        // In ogni altro caso torna null
+        return null;
+    }
+
 }
