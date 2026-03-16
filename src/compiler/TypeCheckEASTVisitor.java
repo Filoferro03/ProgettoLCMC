@@ -191,7 +191,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(IdNode n) throws TypeException {
 		if (print) printNode(n,n.id);
 		TypeNode t = visit(n.entry); 
-		if (t instanceof ArrowTypeNode || t instanceof RefTypeNode)
+		if (t instanceof ArrowTypeNode || t instanceof ClassTypeNode)
 			throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
 		return t;
 	}
