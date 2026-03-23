@@ -266,11 +266,19 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 				localNames.add(field.id);
 				if (virtualTable.containsKey(field.id)) {
 					STentry oldField = virtualTable.get(field.id);
-					STentry fieldEntry = new STentry(nestingLevel, field.getType(), oldField.offset);
-					virtualTable.put(field.id, fieldEntry);
-					fieldTypes.set(-fieldEntry.offset - 1, field.getType());
-					field.offset = fieldEntry.offset;
-
+					if (oldField.type instanceof ArrowTypeNode) {
+						System.out.println("Field id " + field.id + " at line " + n.getLine() + " cannot override a method");
+						stErrors++;
+						STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
+						virtualTable.put(field.id, fieldEntry);
+						fieldTypes.add(-fieldEntry.offset - 1, field.getType());
+						field.offset = fieldEntry.offset;
+					} else {
+						STentry fieldEntry = new STentry(nestingLevel, field.getType(), oldField.offset);
+						virtualTable.put(field.id, fieldEntry);
+						fieldTypes.set(-fieldEntry.offset - 1, field.getType());
+						field.offset = fieldEntry.offset;
+					}
 				} else {
 					STentry fieldEntry = new STentry(nestingLevel, field.getType(), fieldOffset--);
 					virtualTable.put(field.id, fieldEntry);
@@ -317,7 +325,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         for (ParNode par : n.parlist) parTypes.add(par.getType());
 		if (virtualTable.containsKey(n.id)) {
 			STentry oldMethod = virtualTable.get(n.id);
-			n.offset = oldMethod.offset;
+			if (!(oldMethod.type instanceof ArrowTypeNode)) {
+				System.out.println("Method id " + n.id + " at line " + n.getLine() + " cannot override a field");
+				stErrors++;
+				n.offset = methodOffset++;
+			} else {
+				n.offset = oldMethod.offset;
+			}
 		} else {
 			n.offset = methodOffset++;
 		}
