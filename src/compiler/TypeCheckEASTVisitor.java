@@ -74,15 +74,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(IfNode n) throws TypeException {
 		if (print) printNode(n);
 
-		// 1. Verifica che la condizione sia booleana
 		if (!(isSubtype(visit(n.cond), new BoolTypeNode())))
 			throw new TypeException("Non boolean condition in if", n.getLine());
-
-		// 2. Visita i due rami per ottenerne i tipi
 		TypeNode t = visit(n.th);
 		TypeNode e = visit(n.el);
-
-		// 3. Calcola il Lowest Common Ancestor
 		TypeNode lca = lowestCommonAncestor(t, e);
 
 		if (lca != null) return lca;
@@ -215,8 +210,6 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printNode(n,n.val.toString());
 		return new IntTypeNode();
 	}
-
-// gestione tipi incompleti	(se lo sono lancia eccezione)
 	
 	@Override
 	public TypeNode visitNode(ArrowTypeNode n) throws TypeException {
@@ -256,8 +249,6 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		return null;
 	}
 
-// STentry (ritorna campo type)
-
 	@Override
 	public TypeNode visitSTentry(STentry entry) throws TypeException {
 		if (print) printSTentry("type");
@@ -293,21 +284,13 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 				System.out.println("Type checking error in method " + methNode.id + ": " + e.text);
 			}
 		}
-
-		// In caso di ereditarietà, esegui i controlli di overriding [cite: 409]
 		if (n.superId != null) {
-			// Aggiorna la mappa della gerarchia per isSubtype [cite: 274, 277]
 			superType.put(n.id, n.superId);
-
-			// Recupera il tipo del genitore tramite la superEntry [cite: 411]
 			ClassTypeNode parentCT = (ClassTypeNode) n.superEntry.type;
 
 
 			for (FieldNode field : n.fields) {
-				// Calcola la posizione nel genitore: -offset-1
 				int position = -field.offset - 1;
-
-				// Se la posizione è inferiore alla lunghezza, è overriding
 				if (position < parentCT.allFields.size()) {
 					TypeNode parentFieldType = parentCT.allFields.get(position);
 					if (!isSubtype(field.getType(), parentFieldType)) {
@@ -318,15 +301,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 			}
 
 			for (MethodNode meth : n.methods) {
-				// Calcola la posizione nel genitore: offset
 				int position = meth.offset;
 
-
-				// Se la posizione è inferiore alla lunghezza, è overriding
 				if (position < parentCT.allMethods.size()) {
-					// Recuperiamo il tipo funzionale (ArrowTypeNode) del metodo genitore
 					TypeNode parentMethodType = parentCT.allMethods.get(position);
-
 					if (!isSubtype(meth.getType(), parentMethodType)) {
 						System.out.println("Type checking error: invalid method overriding for " + meth.id +
 								" in class " + n.id + " at line " + meth.getLine());
@@ -343,7 +321,6 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(ClassCallNode n) throws TypeException {
 		if (print) printNode(n, n.idObj + "." + n.idMethod);
 
-		//  Recupero il tipo del metodo dalla methodEntry
 		TypeNode t = visit(n.methodEntry);
 
 		if ( !(t instanceof ArrowTypeNode) )
@@ -351,19 +328,15 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 
 		ArrowTypeNode at = (ArrowTypeNode) t;
 
-		// Controllo numero parametri
 		if (at.parlist.size() != n.arglist.size())
 			throw new TypeException("Wrong number of parameters in the invocation of " + n.idMethod, n.getLine());
 
-		// Controllo tipi dei parametri (isSubtype)
 		for (int i = 0; i < n.arglist.size(); i++) {
 			TypeNode argType = visit(n.arglist.get(i));
 			TypeNode parType = at.parlist.get(i);
 			if ( !isSubtype(argType, parType) )
 				throw new TypeException("Wrong type for " + (i+1) + "-th parameter in the invocation of " + n.idMethod, n.getLine());
 		}
-
-		// 4. Restituisco il tipo di ritorno del metodo
 		return at.ret;
 	}
 
@@ -371,7 +344,6 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(NewNode n) throws TypeException {
 		if (print) printNode(n, n.idClass);
 
-		// Recupero il tipo della classe dalla STentry
 		TypeNode t = visit(n.entry);
 
 		if (!(t instanceof ClassTypeNode)) {
@@ -380,22 +352,21 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 
 		ClassTypeNode ct = (ClassTypeNode) t;
 
-		// Controllo numero parametri, cioè i campi della classe
+
 		if (ct.allFields.size() != n.parlist.size()) {
 			throw new TypeException("Wrong number of parameters for 'new " + n.idClass + "'", n.getLine());
 		}
 
-		// Controllo tipi dei parametri
+
 		for (int i = 0; i < n.parlist.size(); i++) {
-			TypeNode argType = visit(n.parlist.get(i)); // Tipo del valore passato
-			TypeNode fieldType = ct.allFields.get(i);   // Tipo atteso dal campo della classe
+			TypeNode argType = visit(n.parlist.get(i));
+			TypeNode fieldType = ct.allFields.get(i);
 
 			if (!isSubtype(argType, fieldType)) {
 				throw new TypeException("Wrong type for " + (i + 1) + "-th field in 'new " + n.idClass + "'", n.getLine());
 			}
 		}
 
-		// restituisco un RefTypeNode con l'ID della classe
 		return new RefTypeNode(n.idClass);
 	}
 
