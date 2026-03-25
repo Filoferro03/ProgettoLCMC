@@ -37,6 +37,7 @@ public class TypeRels {
                     if(!isSubtype(((ArrowTypeNode) b).parlist.get(index), subClassParType)){
                         return false;
                     }
+                    index++;
                 }
             }
 			return true;
