@@ -260,7 +260,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		}
 		for (FieldNode field : n.fields) {
 			if (!localNames.add(field.id)) {
-				System.out.println("Field or method id " + field.id + " at line " + n.getLine() + " already declared in this class");
+				System.out.println("Field id " + field.id + " at line " + n.getLine() + " already declared in this class");
 				stErrors++;
 			}else{
 				localNames.add(field.id);
@@ -288,16 +288,11 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			}
 
 		}
-		Set<String> localMethods = new HashSet<>();
 		for (MethodNode meth : n.methods){
 			if (!localNames.add(meth.id)) {
-				System.out.println("Field or method id " + meth.id + " at line " + meth.getLine() + " already declared in this class");
+				System.out.println("Method id " + meth.id + " at line " + meth.getLine() + " already declared in this class");
 				stErrors++;
 			}else{
-				if (!localMethods.add(meth.id)) {
-					System.out.println("Method id " + meth.id + " at line "+ meth.getLine() +" already declared");
-					stErrors++;
-				}
 				visit(meth);
 				List<TypeNode> parType = new ArrayList<>();
 				for ( ParNode par : meth.parlist ){
