@@ -1,0 +1,13 @@
+let
+  class Base (x:int) {
+    fun compute:int () x;
+  }
+
+
+  class Derived extends Base (compute:int) {
+    fun getX:int () x;
+  }
+
+  var d:Base = new Derived(10, 20);
+in
+  print(d.compute());

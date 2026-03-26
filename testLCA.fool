@@ -1,0 +1,18 @@
+let
+  class Shape (id:int) {
+    fun getArea:int () 0;
+  }
+  class Square extends Shape (side:int) {
+    fun getArea:int () side * side;
+  }
+  class Circle extends Shape (radius:int) {
+    fun getArea:int () 3 * (radius * radius);
+  }
+
+  var s:Shape = new Square(10, 4);
+  var c:Shape = new Circle(20, 5);
+
+
+  var selected:Shape = if (true) then { s } else { c };
+in
+  print(selected.getArea());

@@ -1,0 +1,14 @@
+let
+  class Parent (val:int) {
+    fun process:Parent (p:Child) new Parent(val);
+  }
+
+  class Child extends Parent (extra:int) {
+    fun process:Child (p:GrandChild) new Child(10, 20);
+  }
+
+  class GrandChild extends Child (v:int) {
+    fun getV:int () v;
+  }
+in
+  print(1);
